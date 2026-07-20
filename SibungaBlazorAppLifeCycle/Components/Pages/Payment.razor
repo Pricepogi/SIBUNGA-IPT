@@ -1,0 +1,26 @@
+﻿@page /"onclick""
+
+<div class="payment-screen">
+    <h2>Payment Terminal</h2>
+    <h3 class="total-amount">Total Amount: ₱@Total</h3>
+
+    <div class="payment-options">
+        <button class="payment-btn" @onclick="HandlePayment">💳 Cash / Debit Card</button>
+        <button class="payment-btn" @onclick="HandlePayment">📱 GCash / Maya</button>
+        <button class="payment-btn" @onclick="HandlePayment">🏧 Bank Transfer</button>
+    </div>
+
+    <button class="cancel-btn" @onclick="OnCancel">Cancel</button>
+</div>
+
+@code {
+    [Parameter] public decimal Total { get; set; }
+    [Parameter] public EventCallback OnPaymentSuccess { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private async Task HandlePayment()
+    {
+        await Task.Delay(1500); // Simulate payment processing
+        await OnPaymentSuccess.InvokeAsync();
+    }
+}

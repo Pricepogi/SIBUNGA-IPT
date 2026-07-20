@@ -1,0 +1,286 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Bistro Express - Point of Sale</PageTitle>
+
+<div class="restaurant-app">
+    <!-- RESTAURANT HEADER -->
+    <header class="restaurant-header">
+        <div class="brand">
+            <span class="logo">🍳</span>
+            <div>
+                <h1>SIBUNGA RESTO</h1>
+                <p class="tagline">Crafted Meals & Refreshments</p>
+            </div>
+        </div>
+        <div class="status-badge">
+        </div>
+    </header>
+
+    @if (!isPaid)
+    {
+        <div class="pos-container">
+            <!-- LEFT COLUMN: VISUAL MENU CARDS -->
+            <section class="menu-section">
+                <h2>Our Special Menu</h2>
+                <div class="menu-grid">
+                    @foreach (var item in menuItemDetails)
+                    {
+                        <div class="menu-card @(selectedProduct == item.Key ? "selected" : "")"
+                             @onclick="() => SelectProduct(item.Key)">
+                            <div class="item-icon">@item.Value.Icon</div>
+                            <div class="item-info">
+                                <h3>@item.Key</h3>
+                                <p class="description">@item.Value.Description</p>
+                                <span class="price">$@item.Value.Price.ToString("F2")</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- ADD TO ORDER CONTROL -->
+                <div class="order-controls">
+                    <div class="qty-selector">
+                        <label>Quantity:</label>
+                        <div class="qty-buttons">
+                            <button class="btn-qty" @onclick="DecrementQty">-</button>
+                            <span class="qty-display">@quantity</span>
+                            <button class="btn-qty" @onclick="IncrementQty">+</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-add" @onclick="AddProduct">
+                        ➕ Add @quantity @selectedProduct@(quantity > 1 ? "s" : "") to Order
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert error">@errorMessage</div>
+                }
+            </section>
+
+            <!-- RIGHT COLUMN: LIVE ORDER TICKET -->
+            <section class="ticket-section">
+                <div class="ticket-card">
+                    <div class="ticket-header">
+                        <h2>Current Check</h2>
+                        <span class="table-tag">Dine-In / Takeout</span>
+                    </div>
+
+                    @if (cart.Count == 0)
+                    {
+                        <div class="empty-cart">
+                            <span class="empty-icon">🍽️</span>
+                            <p>No items added yet.<br />Select a menu item to begin.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ticket-items">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-right">Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in cart)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@item.Name</strong>
+                                                <button class="btn-remove" @onclick="() => RemoveItem(item.Name)">✕</button>
+                                            </td>
+                                            <td class="text-center">@item.Quantity</td>
+                                            <td class="text-right">₱@item.TotalPrice.ToString("F2")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="ticket-summary">
+                            <div class="summary-line total">
+                                <span>Total Amount:</span>
+                                <span>₱@GrandTotal.ToString("F2")</span>
+                            </div>
+                        </div>
+
+                        <div class="payment-box">
+                            <label for="payment">Cash Tenders (₱):</label>
+                            <input id="payment" type="number" step="0.01" min="0" placeholder="0.00" @bind="paymentAmount" />
+                            <button class="btn btn-pay" @onclick="ProcessCheckout">
+                                💳 Process Payment
+                            </button>
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+    }
+    else
+    {
+        <!-- RECEIPT VIEW (THERMAL RECEIPT STYLE) -->
+        <div class="receipt-wrapper">
+            <div class="receipt-paper">
+                <div class="receipt-top">
+                    <h2>THE GOURMET BISTRO</h2>
+                    <p>123 Culinary Avenue, Suite 100</p>
+                    <p>Tel: (555) 019-2834</p>
+                    <div class="divider-line">--------------------------------</div>
+                </div>
+
+                <div class="receipt-meta">
+                    <p><strong>DATE:</strong> @orderDateTime.ToString("yyyy-MM-dd")</p>
+                    <p><strong>DAY:</strong> @orderDateTime.ToString("dddd").ToUpper()</p>
+                    <p><strong>TIME:</strong> @orderDateTime.ToString("hh:mm:ss tt")</p>
+                    <p><strong>TICKET #:</strong> @(new Random().Next(1000, 9999))</p>
+                </div>
+
+                <div class="divider-line">--------------------------------</div>
+
+                <table class="receipt-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left">QTY ITEM</th>
+                            <th class="text-right">AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in cart)
+                        {
+                            <tr>
+                                <td class="text-left">@item.Quantity x @item.Name</td>
+                                <td class="text-right">₱@item.TotalPrice.ToString("F2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="divider-line">--------------------------------</div>
+
+                <div class="receipt-totals">
+                    <div class="r-line"><span>TOTAL COST:</span> <span>₱@GrandTotal.ToString("F2")</span></div>
+                    <div class="r-line"><span>CASH PAID:</span> <span>₱@paymentAmount.ToString("F2")</span></div>
+                    <div class="r-line change-line"><span>CHANGE DUE:</span> <span>₱@change.ToString("F2")</span></div>
+                </div>
+
+                <div class="receipt-bottom">
+                    <p>*** THANK YOU FOR DINING WITH US! ***</p>
+                    <p>Please come again</p>
+                </div>
+
+                <button class="btn btn-again" @onclick="ResetOrder">
+                    🔄 New Order / Order Again
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private class MenuItemDetail
+    {
+        public decimal Price { get; set; }
+        public string Icon { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    private class OrderItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public decimal TotalPrice => Price * Quantity;
+    }
+
+    private string selectedProduct = "Burger";
+    private int quantity = 1;
+    private decimal paymentAmount;
+    private decimal change;
+    private bool isPaid = false;
+    private string errorMessage = string.Empty;
+    private DateTime orderDateTime;
+
+    private List<OrderItem> cart = new();
+
+    private readonly Dictionary<string, MenuItemDetail> menuItemDetails = new()
+    {
+        { "Burger", new MenuItemDetail { Price = 69.00m, Icon = "🍔", Description = "Grilled beef patty with lettuce & cheese" } },
+        { "Fries", new MenuItemDetail { Price = 43.50m, Icon = "🍟", Description = "Crispy golden salted french fries" } },
+        { "Drink", new MenuItemDetail { Price = 35.50m, Icon = "🥤", Description = "Ice-cold fountain soda or drink" } }
+    };
+
+    private decimal GrandTotal => cart.Sum(i => i.TotalPrice);
+
+    private void SelectProduct(string productName)
+    {
+        selectedProduct = productName;
+    }
+
+    private void IncrementQty() => quantity++;
+    private void DecrementQty() { if (quantity > 1) quantity--; }
+
+    private void AddProduct()
+    {
+        errorMessage = string.Empty;
+
+        if (menuItemDetails.TryGetValue(selectedProduct, out var item))
+        {
+            var existing = cart.FirstOrDefault(i => i.Name == selectedProduct);
+            if (existing != null)
+            {
+                existing.Quantity += quantity;
+            }
+            else
+            {
+                cart.Add(new OrderItem
+                {
+                    Name = selectedProduct,
+                    Price = item.Price,
+                    Quantity = quantity
+                });
+            }
+        }
+        quantity = 1; // Reset selection quantity
+    }
+
+    private void RemoveItem(string name)
+    {
+        cart.RemoveAll(i => i.Name == name);
+    }
+
+    private void ProcessCheckout()
+    {
+        errorMessage = string.Empty;
+
+        if (cart.Count == 0)
+        {
+            errorMessage = "Your ticket is empty.";
+            return;
+        }
+
+        if (paymentAmount < GrandTotal)
+        {
+            errorMessage = $"Insufficient payment! At least ${GrandTotal:F2} is required.";
+            return;
+        }
+
+        change = paymentAmount - GrandTotal;
+        orderDateTime = DateTime.Now;
+        isPaid = true;
+    }
+
+    private void ResetOrder()
+    {
+        cart.Clear();
+        selectedProduct = "Burger";
+        quantity = 1;
+        paymentAmount = 0;
+        change = 0;
+        errorMessage = string.Empty;
+        isPaid = false;
+    }
+}

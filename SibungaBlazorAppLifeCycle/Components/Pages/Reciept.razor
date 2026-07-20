@@ -1,0 +1,36 @@
+﻿<div class="receipt-container">
+    <div class="receipt">
+        <h2>🍔 JOLLIBEE</h2>
+        <p class="success">Thank you for your order!</p>
+        <hr />
+        <p><strong>Order #JBB-@GetOrderNumber()</strong></p>
+        <p>@DateTime.Now.ToString("dd MMMM yyyy - hh:mm tt")</p>
+
+        <div class="receipt-items">
+            @foreach (var item in OrderItems)
+            {
+                <div class="receipt-item">
+                    <span>@item.Quantity × @item.Name</span>
+                    <span>₱@(item.Price * item.Quantity)</span>
+                </div>
+            }
+        </div>
+
+        <hr />
+        <div class="receipt-total">
+            <strong>Total Paid: ₱@Total</strong>
+        </div>
+
+        <p class="thankyou">Please proceed to the counter with this receipt.<br>Enjoy your Jollibee meal! ❤️</p>
+
+        <button class="new-order-btn" @onclick="OnNewOrder">Start New Order</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<CartItem> OrderItems { get; set; } = new();
+    [Parameter] public decimal Total { get; set; }
+    [Parameter] public EventCallback OnNewOrder { get; set; }
+
+    private string GetOrderNumber() => new Random().Next(10000, 99999).ToString();
+}

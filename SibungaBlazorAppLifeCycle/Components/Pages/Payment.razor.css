@@ -1,0 +1,41 @@
+﻿.payment-screen {
+    text-align: center;
+    padding: 60px 40px;
+    max-width: 500px;
+    margin: 80px auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+.total-amount {
+    font-size: 2.2rem;
+    color: #e30613;
+    margin: 25px 0;
+}
+
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin: 40px 0;
+}
+
+.payment-btn {
+    padding: 20px;
+    font-size: 1.25rem;
+    background: #e30613;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    margin-top: 30px;
+    padding: 14px 40px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 10px;
+}

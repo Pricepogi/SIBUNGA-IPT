@@ -1,0 +1,145 @@
+﻿@page "/"
+
+
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components
+
+<PageTitle>Jollibee Kiosk - Order Now</PageTitle>
+
+@if (showReceipt)
+{
+    <Receipt OrderItems="cart" Total="GetTotal()" OnNewOrder="ResetOrder" />
+}
+else if (showPayment)
+{
+    <Payment Total="GetTotal()" OnPaymentSuccess="CompleteOrder" OnCancel="CancelPayment" />
+}
+else
+{
+    <div class="kiosk-container">
+        <header class="kiosk-header">
+            <h1>🍔 JOLLIBEE</h1>
+            <p class="tagline">Self-Service Kiosk</p>
+        </header>
+
+        <div class="main-content">
+            <div class="categories">
+                @foreach (var cat in categories)
+                {
+                    <button class="category-btn @(currentCategory == cat ? "active" : "")" 
+                            @onclick="() => currentCategory = cat">@cat</button>
+                }
+            </div>
+
+            <div class="menu-grid">
+                @foreach (var item in GetFilteredItems())
+                {
+                    <div class="menu-card" @onclick="() => AddToCart(item)">
+                        <div class="food-image">@item.ImageEmoji</div>
+                        <h5>@item.Name</h5>
+                        <p class="price">₱@item.Price</p>
+                        <p class="desc">@item.Description</p>
+                        <button class="add-btn">+ Add</button>
+                    </div>
+                }
+            </div>
+
+            <div class="cart-sidebar">
+                <h4>Your Order (@cart.Sum(x => x.Quantity))</h4>
+                @if (cart.Any())
+                {
+                    <div class="cart-items">
+                        @foreach (var item in cart)
+                        {
+                            <div class="cart-item">
+                                <div>
+                                    <strong>@item.Name</strong><br>
+                                    <small>₱@item.Price each</small>
+                                </div>
+                                <div class="quantity-control">
+                                    <button @onclick="() => ChangeQuantity(item, -1)">−</button>
+                                    <span>@item.Quantity</span>
+                                    <button @onclick="() => ChangeQuantity(item, 1)">+</button>
+                                </div>
+                                <div class="item-total">₱@(item.Price * item.Quantity)</div>
+                                <button class="remove-btn" @onclick="() => RemoveItem(item)">×</button>
+                            </div>
+                        }
+                    </div>
+                    <div class="total">Total: <strong>₱@GetTotal()</strong></div>
+                    <button class="checkout-btn" @onclick="ProceedToCheckout">Proceed to Payment</button>
+                }
+                else
+                {
+                    <p class="empty-cart">Your cart is empty.<br>Tap items to add.</p>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string currentCategory = "All";
+    private List<string> categories = new() { "All", "Chickenjoy", "Burgers", "Sides", "Drinks", "Desserts" };
+
+    private List<MenuItem> menuItems = new()
+    {
+        new MenuItem { Name = "Chickenjoy Bucket (6pc)", Price = 399, Category = "Chickenjoy", ImageEmoji = "🍗", Description = "Crispy & juicy" },
+        new MenuItem { Name = "Chickenjoy Solo", Price = 149, Category = "Chickenjoy", ImageEmoji = "🍗", Description = "With rice & gravy" },
+        new MenuItem { Name = "Jolly Spaghetti", Price = 89, Category = "Chickenjoy", ImageEmoji = "🍝", Description = "Sweet & savory" },
+        new MenuItem { Name = "Cheeseburger Deluxe", Price = 129, Category = "Burgers", ImageEmoji = "🍔", Description = "With fries" },
+        new MenuItem { Name = "Yumburger", Price = 69, Category = "Burgers", ImageEmoji = "🍔", Description = "Classic favorite" },
+        new MenuItem { Name = "French Fries", Price = 65, Category = "Sides", ImageEmoji = "🍟", Description = "Crispy & hot" },
+        new MenuItem { Name = "Coke Float", Price = 79, Category = "Drinks", ImageEmoji = "🥤", Description = "Refreshing" },
+        new MenuItem { Name = "Halo-Halo", Price = 99, Category = "Desserts", ImageEmoji = "🍧", Description = "Classic Filipino" },
+    };
+
+    private List<CartItem> cart = new();
+    private bool showPayment = false;
+    private bool showReceipt = false;
+
+    private List<MenuItem> GetFilteredItems() => currentCategory == "All" ? menuItems : menuItems.Where(i => i.Category == currentCategory).ToList();
+    private decimal GetTotal() => cart.Sum(i => i.Price * i.Quantity);
+
+    private void AddToCart(MenuItem item)
+    {
+        var existing = cart.FirstOrDefault(x => x.Name == item.Name);
+        if (existing != null) existing.Quantity++;
+        else cart.Add(new CartItem { Name = item.Name, Price = item.Price, Quantity = 1 });
+    }
+
+    private void ChangeQuantity(CartItem item, int change)
+    {
+        item.Quantity += change;
+        if (item.Quantity < 1) cart.Remove(item);
+    }
+
+    private void RemoveItem(CartItem item) => cart.Remove(item);
+
+    private void ProceedToCheckout() => showPayment = true;
+    private void CompleteOrder() { showPayment = false; showReceipt = true; }
+    private void CancelPayment() => showPayment = false;
+
+    private void ResetOrder()
+    {
+        cart.Clear();
+        showReceipt = false;
+        currentCategory = "All";
+    }
+
+    public class MenuItem
+    {
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+        public string Category { get; set; } = "";
+        public string ImageEmoji { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
+
+    public class CartItem
+    {
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+        public int Quantity { get; set; } = 1;
+    }
+}

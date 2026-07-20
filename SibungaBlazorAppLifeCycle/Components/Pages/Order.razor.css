@@ -1,0 +1,161 @@
+﻿.kiosk-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #fff;
+    min-height: 100vh;
+}
+
+.kiosk-header {
+    background: linear-gradient(135deg, #e30613, #c4000a);
+    color: white;
+    text-align: center;
+    padding: 1.8rem 1rem;
+}
+
+    .kiosk-header h1 {
+        font-size: 3.2rem;
+        margin: 0;
+        font-weight: bold;
+    }
+
+.tagline {
+    margin: 0.5rem 0 0;
+    font-size: 1.3rem;
+}
+
+.categories {
+    display: flex;
+    gap: 12px;
+    padding: 20px;
+    background: #f8f9fa;
+    flex-wrap: wrap;
+}
+
+.category-btn {
+    padding: 14px 28px;
+    border: none;
+    background: white;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+    .category-btn.active {
+        background: #e30613;
+        color: white;
+    }
+
+.main-content {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 20px;
+    flex: 1;
+}
+
+.menu-card {
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: white;
+}
+
+    .menu-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 25px rgba(227,6,19,0.15);
+    }
+
+.food-image {
+    font-size: 4.5rem;
+    margin-bottom: 12px;
+}
+
+.price {
+    font-size: 1.4rem;
+    color: #e30613;
+    font-weight: bold;
+    margin: 8px 0;
+}
+
+.add-btn {
+    background: #e30613;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.cart-sidebar {
+    width: 380px;
+    background: #f8f9fa;
+    padding: 20px;
+    border-left: 4px solid #e30613;
+    border-radius: 8px;
+    align-self: start;
+    position: sticky;
+    top: 20px;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #ddd;
+    gap: 10px;
+}
+
+.quantity-control button {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+}
+
+.item-total {
+    font-weight: bold;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: #e30613;
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+.total {
+    margin: 20px 0;
+    font-size: 1.6rem;
+    text-align: right;
+}
+
+.checkout-btn {
+    background: #e30613;
+    color: white;
+    border: none;
+    padding: 18px;
+    width: 100%;
+    font-size: 1.3rem;
+    font-weight: bold;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+
+.empty-cart {
+    text-align: center;
+    color: #888;
+    padding: 40px 20px;
+}
