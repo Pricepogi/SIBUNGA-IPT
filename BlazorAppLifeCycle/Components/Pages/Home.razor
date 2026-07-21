@@ -1,7 +1,7 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
-<PageTitle>Bistro Express - Point of Sale</PageTitle>
+<PageTitle>sibunga resto - Point of Sale</PageTitle>
 
 <div class="restaurant-app">
     <!-- RESTAURANT HEADER -->
@@ -32,7 +32,7 @@
                             <div class="item-info">
                                 <h3>@item.Key</h3>
                                 <p class="description">@item.Value.Description</p>
-                                <span class="price">$@item.Value.Price.ToString("F2")</span>
+                                <span class="price">₱@item.Value.Price.ToString("F2")</span>
                             </div>
                         </div>
                     }
@@ -126,7 +126,7 @@
         <div class="receipt-wrapper">
             <div class="receipt-paper">
                 <div class="receipt-top">
-                    <h2>THE GOURMET BISTRO</h2>
+                    <h2>Sibunga Resto </h2>
                     <p>123 Culinary Avenue, Suite 100</p>
                     <p>Tel: (555) 019-2834</p>
                     <div class="divider-line">--------------------------------</div>
@@ -264,7 +264,7 @@
 
         if (paymentAmount < GrandTotal)
         {
-            errorMessage = $"Insufficient payment! At least ${GrandTotal:F2} is required.";
+            errorMessage = $"Insufficient payment! At least ₱{GrandTotal:F2} is required.";
             return;
         }
 
