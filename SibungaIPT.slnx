@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="BlazorAppLifeCycle/BlazorAppLifeCycle.csproj" Id="deec5b0e-032f-4e61-96ac-48216b1ff4b0" />
+  <Project Path="SibungaAPI/SibungaAPI.csproj" Id="738ee73e-718e-4b7c-a23c-450a82bcd259" />
   <Project Path="SibungaIPT.BlazorApp/SibungaIPT.BlazorApp.csproj" />
   <Project Path="Sibunga_BlazorExam/Sibunga_BlazorExam.csproj" Id="feb6775f-2cf0-4170-9085-97d1e9264ec7" />
 </Solution>
