@@ -1,0 +1,190 @@
+@page "/student"
+@rendermode InteractiveServer
+
+@using System.Net.Http.Json
+
+<PageTitle>Student API Demo</PageTitle>
+
+<div class="container mt-4">
+    <h2>Student API Demo</h2>
+
+    <div class="mb-3">
+        <label>API Base URL</label>
+        <input class="form-control" @bind="ApiBase" />
+        <small class="text-muted">Example: https://localhost:7248</small>
+    </div>
+
+    <div class="mb-3">
+        <button class="btn btn-primary me-2" @onclick="GetAll">Refresh (GETs)</button>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>Student Info</h5>
+            <p><strong>Full name:</strong> @fullName</p>
+            <p><strong>IdNo:</strong> @idNo</p>
+            <p><strong>Program:</strong> @program</p>
+            <p><strong>Birthdate:</strong> @birthdate</p>
+            <p><strong>Age:</strong> @age</p>
+            <p><strong>Full-time:</strong> @fullTime</p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>POST Operations</h5>
+            <div class="mb-2">
+                <label>Set Full-time</label>
+                <select class="form-select w-auto d-inline-block me-2" @bind="setFullTimeVal">
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                </select>
+                <button class="btn btn-secondary" @onclick="SetFullTime">Set</button>
+            </div>
+
+            <div class="mb-2">
+                <label>Set IdNo</label>
+                <input class="form-control d-inline-block w-auto me-2" style="min-width:200px" @bind="setIdNoVal" />
+                <button class="btn btn-secondary" @onclick="SetIdNo">Set</button>
+            </div>
+
+            <div class="mb-2">
+                <label>Set Program</label>
+                <input class="form-control d-inline-block w-auto me-2" style="min-width:200px" @bind="setProgramVal" />
+                <button class="btn btn-secondary" @onclick="SetProgram">Set</button>
+            </div>
+
+            <div class="mb-2">
+                <label>Set Birthdate (yyyy-MM-dd)</label>
+                <input class="form-control d-inline-block w-auto me-2" style="min-width:200px" @bind="setBirthdateVal" />
+                <button class="btn btn-secondary" @onclick="SetBirthdate">Set</button>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert alert-info">@statusMessage</div>
+    }
+</div>
+
+@code {
+    private string ApiBase { get; set; } = "https://localhost:7248";
+    private string fullName = "-";
+    private string idNo = "-";
+    private string program = "-";
+    private string birthdate = "-";
+    private string age = "-";
+    private string fullTime = "-";
+
+    private string statusMessage = string.Empty;
+
+    private string setFullTimeVal = "true";
+    private string setIdNoVal = string.Empty;
+    private string setProgramVal = string.Empty;
+    private string setBirthdateVal = string.Empty;
+
+    private HttpClient CreateClient()
+    {
+        var client = new HttpClient();
+        client.BaseAddress = new Uri(ApiBase.TrimEnd('/'));
+        return client;
+    }
+
+    private async Task GetAll()
+    {
+        statusMessage = string.Empty;
+        try
+        {
+            using var client = CreateClient();
+            fullName = await SafeGetString(client, "api/student/fullname");
+            idNo = await SafeGetString(client, "api/student/idno");
+            program = await SafeGetString(client, "api/student/program");
+            birthdate = await SafeGetString(client, "api/student/birthdate");
+            var a = await SafeGetString(client, "api/student/age");
+            age = a ?? "-";
+            fullTime = await SafeGetString(client, "api/student/fulltime");
+        }
+        catch (Exception ex)
+        {
+            statusMessage = ex.Message;
+        }
+    }
+
+    private async Task<string> SafeGetString(HttpClient client, string url)
+    {
+        try
+        {
+            var res = await client.GetAsync(url);
+            if (!res.IsSuccessStatusCode) return $"(error {res.StatusCode})";
+            var text = await res.Content.ReadAsStringAsync();
+            // Trim quotes if returned as JSON string
+            return text.Trim('"');
+        }
+        catch (Exception ex)
+        {
+            return $"(error: {ex.Message})";
+        }
+    }
+
+    private async Task SetFullTime()
+    {
+        statusMessage = string.Empty;
+        try
+        {
+            using var client = CreateClient();
+            var value = bool.Parse(setFullTimeVal);
+            var res = await client.PostAsJsonAsync("api/student/set-fulltime", value);
+            statusMessage = res.IsSuccessStatusCode ? "Set full-time OK" : $"Error: {res.StatusCode}";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = ex.Message;
+        }
+    }
+
+    private async Task SetIdNo()
+    {
+        statusMessage = string.Empty;
+        try
+        {
+            using var client = CreateClient();
+            var res = await client.PostAsJsonAsync("api/student/set-idno", setIdNoVal ?? string.Empty);
+            statusMessage = res.IsSuccessStatusCode ? "Set idno OK" : $"Error: {res.StatusCode}";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = ex.Message;
+        }
+    }
+
+    private async Task SetProgram()
+    {
+        statusMessage = string.Empty;
+        try
+        {
+            using var client = CreateClient();
+            var res = await client.PostAsJsonAsync("api/student/set-program", setProgramVal ?? string.Empty);
+            statusMessage = res.IsSuccessStatusCode ? "Set program OK" : $"Error: {res.StatusCode}";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = ex.Message;
+        }
+    }
+
+    private async Task SetBirthdate()
+    {
+        statusMessage = string.Empty;
+        try
+        {
+            using var client = CreateClient();
+            var res = await client.PostAsJsonAsync("api/student/set-birthdate", setBirthdateVal ?? string.Empty);
+            statusMessage = res.IsSuccessStatusCode ? "Set birthdate OK" : $"Error: {res.StatusCode}";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = ex.Message;
+        }
+    }
+}

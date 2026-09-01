@@ -1,0 +1,302 @@
+@page "/apis"
+@rendermode InteractiveServer
+
+@using System.Net.Http.Json
+@using System.Text.Json
+@using SibungaAPI.Services
+@using SibungaAPI.Models
+
+<PageTitle>APIs Demo</PageTitle>
+
+<div class="container mt-4">
+    <h3>External APIs</h3>
+
+    <div class="mb-2">
+        <label class="me-2">Nationalize name:</label>
+        <input class="form-control d-inline-block w-auto me-2" style="min-width:180px" @bind="nationalizeName" />
+        <button class="btn btn-primary me-2" @onclick="FetchHealthcare">Fetch nationalize.io</button>
+        <button class="btn btn-primary me-2" @onclick="FetchJoke">Fetch random joke</button>
+        <button class="btn btn-primary" @onclick="FetchFda">Fetch FDA food enforcement (limit=10)</button>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>Nationalize.io result</h5>
+            <pre style="max-height:200px;overflow:auto">@healthJson</pre>
+            @if (nationalizeResult != null && nationalizeResult.Country != null)
+            {
+                <table class="table table-sm mt-2">
+                    <thead>
+                        <tr><th>Country</th><th>Probability</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in nationalizeResult.Country)
+                        {
+                            <tr><td>@c.CountryId</td><td>@(c.Probability.ToString("P2"))</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>Random joke</h5>
+            <p><strong>@jokeSetup</strong></p>
+            <p>@jokePunchline</p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>FDA food enforcement (10)</h5>
+            <pre style="max-height:200px;overflow:auto">@fdaJson</pre>
+            @if (fdaResults != null)
+            {
+                <table class="table table-sm mt-2">
+                    <thead>
+                        <tr><th>Recall #</th><th>Product</th><th>Reason</th><th>Distribution</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in fdaResults)
+                        {
+                            <tr>
+                                <td>@r.RecallNumber</td>
+                                <td>@r.ProductDescription</td>
+                                <td>@r.ReasonForRecall</td>
+                                <td>@r.DistributionPattern</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <h3>Local Student API (latest API)</h3>
+    <div class="mb-2">
+        <label>Student API base URL</label>
+        <input class="form-control w-50 d-inline-block me-2" @bind="StudentApiBase" />
+        <button class="btn btn-secondary" @onclick="FetchStudentAll">Refresh Student</button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <p><strong>FullName:</strong> @studentFullName</p>
+            <p><strong>IdNo:</strong> @studentIdNo</p>
+            <p><strong>Program:</strong> @studentProgram</p>
+            <p><strong>Birthdate:</strong> @studentBirthdate</p>
+            <p><strong>Age:</strong> @studentAge</p>
+            <p><strong>FullTime:</strong> @studentFullTime</p>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <h5>Set values (POST)</h5>
+        <div class="mb-2">
+            <input class="form-control w-25 d-inline-block me-2" placeholder="New IdNo" @bind="setIdNoVal" />
+            <button class="btn btn-sm btn-primary" @onclick="SetIdNo">Set IdNo</button>
+        </div>
+        <div class="mb-2">
+            <input class="form-control w-25 d-inline-block me-2" placeholder="New Program" @bind="setProgramVal" />
+            <button class="btn btn-sm btn-primary" @onclick="SetProgram">Set Program</button>
+        </div>
+        <div class="mb-2">
+            <input class="form-control w-25 d-inline-block me-2" placeholder="Birthdate yyyy-MM-dd" @bind="setBirthdateVal" />
+            <button class="btn btn-sm btn-primary" @onclick="SetBirthdate">Set Birthdate</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Status))
+    {
+        <div class="alert alert-info mt-3">@Status</div>
+    }
+</div>
+
+@code {
+    private string healthJson = "";
+    private string nationalizeName = "bock";
+    private NationalizeResponse? nationalizeResult;
+    private string jokeSetup = "";
+    private string jokePunchline = "";
+    private string fdaJson = "";
+    private List<FdaResult>? fdaResults;
+
+    private string StudentApiBase { get; set; } = "https://localhost:7248"; // edit as needed
+    private string studentFullName = "-";
+    private string studentIdNo = "-";
+    private string studentProgram = "-";
+    private string studentBirthdate = "-";
+    private string studentAge = "-";
+    private string studentFullTime = "-";
+
+    private string setIdNoVal = string.Empty;
+    private string setProgramVal = string.Empty;
+    private string setBirthdateVal = string.Empty;
+
+    private string Status = string.Empty;
+
+    [Inject]
+    private HealthcareService HealthcareService { get; set; } = default!;
+
+    [Inject]
+    private JokeService JokeService { get; set; } = default!;
+
+    [Inject]
+    private FdaService FdaService { get; set; } = default!;
+
+    private HttpClient CreateClient(string baseAddress = null)
+    {
+        var client = new HttpClient();
+        if (!string.IsNullOrEmpty(baseAddress)) client.BaseAddress = new Uri(baseAddress.TrimEnd('/'));
+        return client;
+    }
+
+    private async Task FetchHealthcare()
+    {
+        Status = string.Empty;
+        try
+        {
+            var idx = await HealthcareService.GetIndexAsync(nationalizeName);
+            if (idx == null)
+            {
+                healthJson = "(error fetching nationalize data)";
+                nationalizeResult = null;
+                return;
+            }
+            nationalizeResult = idx;
+            healthJson = JsonSerializer.Serialize(idx, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+    }
+
+    private async Task FetchJoke()
+    {
+        Status = string.Empty;
+        try
+        {
+            var j = await JokeService.GetRandomJokeAsync();
+            if (j != null)
+            {
+                jokeSetup = j.setup;
+                jokePunchline = j.punchline;
+            }
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+    }
+
+    private async Task FetchFda()
+    {
+        Status = string.Empty;
+        try
+        {
+            var r = await FdaService.GetFoodEnforcementAsync(10);
+            if (r == null)
+            {
+                fdaJson = "(error fetching fda data)";
+                fdaResults = null;
+            }
+            else
+            {
+                fdaResults = r.Results ?? new List<FdaResult>();
+                fdaJson = JsonSerializer.Serialize(r, new JsonSerializerOptions { WriteIndented = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+    }
+
+    private async Task FetchStudentAll()
+    {
+        Status = string.Empty;
+        try
+        {
+            using var c = CreateClient(StudentApiBase);
+            studentFullName = await SafeGet(c, "api/student/fullname");
+            studentIdNo = await SafeGet(c, "api/student/idno");
+            studentProgram = await SafeGet(c, "api/student/program");
+            studentBirthdate = await SafeGet(c, "api/student/birthdate");
+            var a = await SafeGet(c, "api/student/age");
+            studentAge = a;
+            studentFullTime = await SafeGet(c, "api/student/fulltime");
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+    }
+
+    private async Task<string> SafeGet(HttpClient c, string url)
+    {
+        try
+        {
+            var r = await c.GetAsync(url);
+            if (!r.IsSuccessStatusCode) return $"(error {r.StatusCode})";
+            var txt = await r.Content.ReadAsStringAsync();
+            return txt.Trim('"');
+        }
+        catch (Exception ex)
+        {
+            return $"(error: {ex.Message})";
+        }
+    }
+
+    private async Task SetIdNo()
+    {
+        Status = string.Empty;
+        try
+        {
+            using var c = CreateClient(StudentApiBase);
+            var res = await c.PostAsJsonAsync("api/student/set-idno", setIdNoVal ?? string.Empty);
+            Status = res.IsSuccessStatusCode ? "IdNo set" : $"Error: {res.StatusCode}";
+            await FetchStudentAll();
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+    }
+
+    private async Task SetProgram()
+    {
+        Status = string.Empty;
+        try
+        {
+            using var c = CreateClient(StudentApiBase);
+            var res = await c.PostAsJsonAsync("api/student/set-program", setProgramVal ?? string.Empty);
+            Status = res.IsSuccessStatusCode ? "Program set" : $"Error: {res.StatusCode}";
+            await FetchStudentAll();
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+    }
+
+    private async Task SetBirthdate()
+    {
+        Status = string.Empty;
+        try
+        {
+            using var c = CreateClient(StudentApiBase);
+            var res = await c.PostAsJsonAsync("api/student/set-birthdate", setBirthdateVal ?? string.Empty);
+            Status = res.IsSuccessStatusCode ? "Birthdate set" : $"Error: {res.StatusCode}";
+            await FetchStudentAll();
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+    }
+
+    // Joke model moved to SibungaAPI.Models.Joke
+}
